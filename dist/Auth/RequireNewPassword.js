@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { View, ScrollView } from 'react-native';
+import { View, ScrollView, ActivityIndicator } from 'react-native';
 import { Auth, I18n, Logger } from 'aws-amplify';
 import { FormField, AmplifyButton, LinkCell, Header, ErrorRow, SignedOutMessage, Wrapper } from '../AmplifyUI';
 import AuthPiece from './AuthPiece';
@@ -37,6 +37,7 @@ export default class RequireNewPassword extends AuthPiece {
 	change() {
 		const user = this.props.authData;
 		const { password, requiredAttributes } = this.state;
+		this.setState({loading: true});
 		logger.debug('Require new password for ' + user.username);
 		Auth.completeNewPassword(user, password, requiredAttributes).then(user => {
 			if (user.challengeName === 'SMS_MFA') {
@@ -44,7 +45,11 @@ export default class RequireNewPassword extends AuthPiece {
 			} else {
 				this.checkContact(user);
 			}
-		}).catch(err => this.error(err));
+			this.setState({loading: true});
+		}).catch(err => {
+			this.error(err)
+			this.setState({loading: true});
+		});
 	}
 
 	generateForm(attribute, theme) {
@@ -92,7 +97,7 @@ export default class RequireNewPassword extends AuthPiece {
 						return this.generateForm(attribute, theme);
 					}),
 					React.createElement(AmplifyButton, {
-						text: I18n.get('Change Password'),
+						text: this.state.loading ? <ActivityIndicator color="#fff" size="small" style={{width: 10, height: 20}} /> : I18n.get('Change Password'),
 						onPress: this.change,
 						theme: theme,
 						disabled: !(this.state.password && Object.keys(this.state.requiredAttributes).length === Object.keys(requiredAttributes).length)

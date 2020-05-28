@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { View, ScrollView } from 'react-native';
+import { View, ScrollView, ActivityIndicator } from 'react-native';
 import { Auth, I18n, Logger } from 'aws-amplify';
 import { FormField, PhoneField, LinkCell, Header, ErrorRow, AmplifyButton, SignedOutMessage, Wrapper } from '../AmplifyUI';
 import AuthPiece from './AuthPiece';
@@ -26,7 +26,7 @@ export default class SignUp extends AuthPiece {
 		super(props);
 
 		this._validAuthStates = ['signUp'];
-		this.state = {};
+		this.state = {loading: false};
 		this.signUp = this.signUp.bind(this);
 		this.sortFields = this.sortFields.bind(this);
 		this.getDefaultDialCode = this.getDefaultDialCode.bind(this);
@@ -110,7 +110,7 @@ export default class SignUp extends AuthPiece {
 	needPrefix(key) {
 		const field = this.signUpFields.find(e => e.key === key);
 		if (key.indexOf('custom:') !== 0) {
-			return field.custom;
+			return field ? field.custom : null;
 		} else if (key.indexOf('custom:') === 0 && field.custom === false) {
 			logger.warn('Custom prefix prepended to key but custom field flag is set to false');
 		}
@@ -130,6 +130,8 @@ export default class SignUp extends AuthPiece {
 			throw new Error('No Auth module found, please ensure @aws-amplify/auth is imported');
 		}
 
+		this.setState({loading: true});
+		
 		const signup_info = {
 			username: this.state.username,
 			password: this.state.password,
@@ -165,8 +167,12 @@ export default class SignUp extends AuthPiece {
 
 		logger.debug('Signing up with', signup_info);
 		Auth.signUp(signup_info).then(data => {
+			this.setState({loading: false});
 			this.changeState('confirmSignUp', data.user.username);
-		}).catch(err => this.error(err));
+		}).catch(err => {
+			this.error(err)
+			this.setState({loading: false});
+		});
 	}
 
 	showComponent(theme) {
@@ -216,7 +222,7 @@ export default class SignUp extends AuthPiece {
 						});
 					}),
 					React.createElement(AmplifyButton, {
-						text: I18n.get('Sign Up').toUpperCase(),
+						text: this.state.loading ? <ActivityIndicator color="#fff" size="small" style={{width: 10, height: 20}} /> : I18n.get('Sign Up').toUpperCase(),
 						theme: theme,
 						onPress: this.signUp,
 						disabled: !this.isValid(),

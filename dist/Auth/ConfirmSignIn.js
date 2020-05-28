@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { View } from 'react-native';
+import { View, ActivityIndicator } from 'react-native';
 import { Auth, I18n, Logger, JS } from 'aws-amplify';
 import { AmplifyButton, FormField, LinkCell, Header, ErrorRow, SignedOutMessage, Wrapper } from '../AmplifyUI';
 import AuthPiece from './AuthPiece';
@@ -27,7 +27,8 @@ export default class ConfirmSignIn extends AuthPiece {
 		this._validAuthStates = ['confirmSignIn'];
 		this.state = {
 			code: null,
-			error: null
+			error: null,
+			loading: false
 		};
 
 		this.confirm = this.confirm.bind(this);
@@ -37,8 +38,15 @@ export default class ConfirmSignIn extends AuthPiece {
 	confirm() {
 		const user = this.props.authData;
 		const { code } = this.state;
+		this.setState({loading: true});
 		logger.debug('Confirm Sign In for ' + user.username);
-		Auth.confirmSignIn(user, code).then(data => this.checkContact(user)).catch(err => this.error(err));
+		Auth.confirmSignIn(user, code).then(data => {
+			this.checkContact(user)
+			this.setState({loading: false});
+		}).catch(err => {
+			this.error(err)
+			this.setState({loading: false});
+		});
 	}
 
 	showComponent(theme) {
@@ -69,7 +77,7 @@ export default class ConfirmSignIn extends AuthPiece {
 						}),
 						React.createElement(AmplifyButton, {
 							theme: theme,
-							text: I18n.get('Confirm'),
+							text: this.state.loading ? <ActivityIndicator color="#fff" size="small" style={{width: 10, height: 20}} /> : I18n.get('Confirm'),
 							onPress: this.confirm,
 							disabled: !this.state.code,
 							testID: TEST_ID.AUTH.CONFIRM_BUTTON

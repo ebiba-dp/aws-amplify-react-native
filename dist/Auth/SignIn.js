@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { View } from 'react-native';
+import { View, ActivityIndicator } from 'react-native';
 import { Auth, I18n, Logger } from 'aws-amplify';
 import AuthPiece from './AuthPiece';
 import { AmplifyButton, FormField, LinkCell, Header, ErrorRow, SignedOutMessage, Wrapper } from '../AmplifyUI';
@@ -28,7 +28,8 @@ export default class SignIn extends AuthPiece {
 		this.state = {
 			username: null,
 			password: null,
-			error: null
+			error: null,
+			loading: false
 		};
 
 		this.checkContact = this.checkContact.bind(this);
@@ -39,6 +40,8 @@ export default class SignIn extends AuthPiece {
 		const username = this.getUsernameFromInput() || '';
 		const { password } = this.state;
 		logger.debug('Sign In for ' + username);
+		this.setState({loading: true});
+
 		return Auth.signIn(username, password).then(user => {
 			logger.debug(user);
 			const requireMFA = user.Session !== null;
@@ -50,6 +53,7 @@ export default class SignIn extends AuthPiece {
 			} else {
 				this.checkContact(user);
 			}
+			this.setState({loading: false});
 		}).catch(err => {
 			if (err.code === 'PasswordResetRequiredException') {
 				logger.debug('the user requires a new password');
@@ -57,6 +61,7 @@ export default class SignIn extends AuthPiece {
 			} else {
 				this.error(err);
 			}
+			this.setState({loading: false});
 		});
 	}
 
@@ -92,7 +97,7 @@ export default class SignIn extends AuthPiece {
 							testID: TEST_ID.AUTH.PASSWORD_INPUT
 						}),
 						React.createElement(AmplifyButton, {
-							text: I18n.get('Sign In').toUpperCase(),
+							text: this.state.loading ? <ActivityIndicator color="#fff" size="small" style={{width: 10, height: 20}} /> : I18n.get('Sign In').toUpperCase(),
 							theme: theme,
 							onPress: this.signIn,
 							disabled: !!(!this.getUsernameFromInput() && this.state.password),
