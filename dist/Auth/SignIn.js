@@ -40,12 +40,13 @@ export default class SignIn extends AuthPiece {
 		const username = this.getUsernameFromInput() || '';
 		const { password } = this.state;
 		logger.debug('Sign In for ' + username);
+		Auth.configure({authenticationFlowType: "CUSTOM_AUTH"})
 		this.setState({loading: true});
 
 		return Auth.signIn(username, password).then(user => {
 			logger.debug(user);
 			const requireMFA = user.Session !== null;
-			if (user.challengeName === 'SMS_MFA') {
+			if (user.challengeName === 'CUSTOM_CHALLENGE') {
 				this.changeState('confirmSignIn', user);
 			} else if (user.challengeName === 'NEW_PASSWORD_REQUIRED') {
 				logger.debug('require new password', user.challengeParam);

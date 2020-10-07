@@ -33,6 +33,7 @@ export default class ConfirmSignIn extends AuthPiece {
 
 		this.confirm = this.confirm.bind(this);
 		this.checkContact = this.checkContact.bind(this);
+		this.sendPinAgain= this.sendPinAgain.bind(this)
 	}
 
 	confirm() {
@@ -40,11 +41,34 @@ export default class ConfirmSignIn extends AuthPiece {
 		const { code } = this.state;
 		this.setState({loading: true});
 		logger.debug('Confirm Sign In for ' + user.username);
-		Auth.confirmSignIn(user, code).then(data => {
+		Auth.sendCustomChallengeAnswer(user, code).then(data => {
 			this.checkContact(user)
 			this.setState({loading: false});
 		}).catch(err => {
-			this.error(err)
+			console.log("wrong pinn", err)
+			if(err.code === "NotAuthorizedException"){
+				this.changeState('signIn')
+			}
+			this.error("Wrong PIN!")
+			this.setState({loading: false});
+		});
+	}
+
+	sendPinAgain () {
+		const user = this.props.authData;
+		console.log("ERDHI TEK SEND PINAGIAN")
+		this.setState({loading: true});
+		Auth.sendCustomChallengeAnswer(user, "RESEND_PIN").then(data => {
+			console.log("SUCSSSESSS TEK SEND PINAGIAN")
+
+			this.setState({loading: false});
+		}).catch(err => {
+			console.log("ERRORRR sind pin again", err)
+			if(err.code === "NotAuthorizedException"){
+				this.changeState('signIn')
+			}
+			console.log("wrong pin TEK SEND PINAGIAN", err)
+			this.error("Something went wrong, couldn't resend PIN!")
 			this.setState({loading: false});
 		});
 	}
@@ -86,6 +110,15 @@ export default class ConfirmSignIn extends AuthPiece {
 					React.createElement(
 						View,
 						{ style: theme.sectionFooter },
+						React.createElement(
+							LinkCell,
+							{
+								theme: theme,
+								onPress: this.sendPinAgain,
+								testID: TEST_ID.AUTH.BACK_TO_SIGN_IN_BUTTON
+							},
+							I18n.get('Send Pin Again')
+						),
 						React.createElement(
 							LinkCell,
 							{
