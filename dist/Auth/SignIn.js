@@ -117,15 +117,6 @@ export default class SignIn extends AuthPiece {
 							},
 							I18n.get('Forgot Password')
 						),
-						React.createElement(
-							LinkCell,
-							{
-								theme: theme,
-								onPress: () => this.changeState('signUp'),
-								testID: TEST_ID.AUTH.SIGN_UP_BUTTON
-							},
-							I18n.get('Sign Up')
-						)
 					),
 					React.createElement(
 						ErrorRow,
