@@ -12,11 +12,12 @@
  */
 
 import React from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, Alert } from 'react-native';
 import { Auth, I18n, Logger, JS } from 'aws-amplify';
 import { AmplifyButton, FormField, LinkCell, Header, ErrorRow, SignedOutMessage, Wrapper } from '../AmplifyUI';
 import AuthPiece from './AuthPiece';
 import TEST_ID from '../AmplifyTestIDs';
+import { getUniqueId, getManufacturer,getDevice, getDeviceName, getSystemVersion, getSystemName, getModel, isTablet  } from 'react-native-device-info'
 
 const logger = new Logger('ConfirmSignIn');
 
@@ -36,29 +37,87 @@ export default class ConfirmSignIn extends AuthPiece {
 		this.sendPinAgain= this.sendPinAgain.bind(this)
 	}
 
-	confirm() {
+	
+
+	async confirm() {
 		const user = this.props.authData;
 		const { code } = this.state;
 		this.setState({loading: true});
 		logger.debug('Confirm Sign In for ' + user.username);
-		Auth.sendCustomChallengeAnswer(user, code).then(data => {
+		// Auth.sendCustomChallengeAnswer(user, code).then(data => {
+		// 	this.checkContact(user)
+		// }).catch(err => {
+		// 	console.log("wrong pinn", err)
+		// 	if(err.code === "NotAuthorizedException"){
+		// 		this.changeState('signIn')
+		// 	}
+		// 	this.error("Wrong PIN!")
+		// 	this.setState({loading: false});
+		// })
+
+		try{
+			await Auth.sendCustomChallengeAnswer(user, JSON.stringify({
+        type: "PIN", 
+        message: code 
+      }))
 			this.checkContact(user)
-			this.setState({loading: false});
-		}).catch(err => {
+		} catch(err){
 			console.log("wrong pinn", err)
 			if(err.code === "NotAuthorizedException"){
 				this.changeState('signIn')
 			}
 			this.error("Wrong PIN!")
-			this.setState({loading: false});
-		});
+			return this.setState({loading: false});
+		}
+
+		function capitalizeFirstLetter(string) {
+			return string.charAt(0).toUpperCase() + string.slice(1)
+		}
+	
+		const phoneInfo = {
+			deviceId: getUniqueId(),
+			os: getSystemName() + ' ' + getSystemVersion(),
+			isTablet: isTablet(),
+		}
+		user.getCachedDeviceKeyAndPassword(); // without this line, the deviceKey is null
+		console.log("DEVICEEEEEEEEEEEEEEEEEEEE",user.deviceKey);
+		phoneInfo.cognitoKey = user.deviceKey
+		
+		const deviceName = await getDeviceName()
+		const manufacturer = await getManufacturer()
+		phoneInfo.deviceName = deviceName
+		phoneInfo.model = capitalizeFirstLetter(manufacturer) + ' ' + getModel()
+		console.log("PO DERGON DEVICIN")
+		try{
+			await Auth.sendCustomChallengeAnswer(user, JSON.stringify({
+        type: "DEVICE", 
+        message: phoneInfo 
+      }))
+			this.checkContact(user)
+			this.setState({loading: false})
+			console.log("DEVICE SUSCCSESS")
+		} catch(err){
+			Alert.alert(
+				'You are not Authorized!',
+				'You are not authorized, to accses the next screen! (ui+ux is needed)',
+			);
+			console.log("wrong deviceeeEEEEEEEEEEeee", err)
+			if(err.code === "NotAuthorizedException"){
+				this.changeState('signIn')
+			}
+			this.error("You are not authorized!")
+			return this.setState({loading: false});
+		}
+
 	}
 
 	sendPinAgain () {
 		const user = this.props.authData;
 		console.log("ERDHI TEK SEND PINAGIAN")
 		this.setState({loading: true});
-		Auth.sendCustomChallengeAnswer(user, "RESEND_PIN").then(data => {
+		Auth.sendCustomChallengeAnswer(user, JSON.stringify({
+			type: "RESEND_PIN", 
+		})).then(data => {
 			console.log("SUCSSSESSS TEK SEND PINAGIAN")
 
 			this.setState({loading: false});

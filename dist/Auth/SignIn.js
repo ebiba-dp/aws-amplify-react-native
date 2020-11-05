@@ -18,6 +18,7 @@ import AuthPiece from './AuthPiece';
 import { AmplifyButton, FormField, LinkCell, Header, ErrorRow, SignedOutMessage, Wrapper } from '../AmplifyUI';
 import TEST_ID from '../AmplifyTestIDs';
 
+
 const logger = new Logger('SignIn');
 
 export default class SignIn extends AuthPiece {
@@ -36,7 +37,7 @@ export default class SignIn extends AuthPiece {
 		this.signIn = this.signIn.bind(this);
 	}
 
-	signIn() {
+	signIn() {		
 		const username = this.getUsernameFromInput() || '';
 		const { password } = this.state;
 		logger.debug('Sign In for ' + username);
