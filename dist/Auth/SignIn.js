@@ -122,7 +122,7 @@ export default class SignIn extends AuthPiece {
 					React.createElement(
 						ErrorRow,
 						{ theme: theme },
-						this.state.error
+						this.state.error || (this.props.authData && this.props.authData.error),
 					)
 				),
 				React.createElement(SignedOutMessage, this.props)

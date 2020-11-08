@@ -56,17 +56,21 @@ export default class ConfirmSignIn extends AuthPiece {
 		// })
 
 		try{
-			await Auth.sendCustomChallengeAnswer(user, JSON.stringify({
+			const usr = await Auth.sendCustomChallengeAnswer(user, JSON.stringify({
         type: "PIN", 
         message: code 
-      }))
+			}))
+			// if device verifier let it go down
+			if(usr.challengeParam.challengeMetadata==="PIN_VERIFIER"){
+				this.error("Wrong PIN!")
+				return this.setState({loading: false});
+			}
 			this.checkContact(user)
 		} catch(err){
-			console.log("wrong pinn", err)
+			console.log("wrong pinnnnnnnnnn", err)
 			if(err.code === "NotAuthorizedException"){
 				this.changeState('signIn')
 			}
-			this.error("Wrong PIN!")
 			return this.setState({loading: false});
 		}
 
@@ -97,15 +101,17 @@ export default class ConfirmSignIn extends AuthPiece {
 			this.setState({loading: false})
 			console.log("DEVICE SUSCCSESS")
 		} catch(err){
-			Alert.alert(
-				'You are not Authorized!',
-				'You are not authorized, to accses the next screen! (ui+ux is needed)',
-			);
+			// Alert.alert(
+			// 	'You are not Authorized!',
+			// 	'You are not authorized, to accses the next screen! (ui+ux is needed)',
+			// );
 			console.log("wrong deviceeeEEEEEEEEEEeee", err)
 			if(err.code === "NotAuthorizedException"){
-				this.changeState('signIn')
+				this.changeState('signIn', {
+					error: "You are not authorized!"
+				})
 			}
-			this.error("You are not authorized!")
+			// this.error("You are not authorized!")
 			return this.setState({loading: false});
 		}
 
