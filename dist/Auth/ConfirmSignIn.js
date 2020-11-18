@@ -62,7 +62,7 @@ export default class ConfirmSignIn extends AuthPiece {
 			}))
 			// if device verifier let it go down
 			if(usr.challengeParam.challengeMetadata==="PIN_VERIFIER"){
-				this.error("Wrong PIN!")
+				this.error(I18n.get("WrongPIN"))
 				return this.setState({loading: false});
 			}
 			this.checkContact(user)
@@ -108,7 +108,7 @@ export default class ConfirmSignIn extends AuthPiece {
 			console.log("wrong deviceeeEEEEEEEEEEeee", err)
 			if(err.code === "NotAuthorizedException"){
 				this.changeState('signIn', {
-					error: "You are not authorized!"
+					error: I18n.get("NotAuthorized")
 				})
 			}
 			// this.error("You are not authorized!")
